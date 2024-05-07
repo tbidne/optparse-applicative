@@ -39,6 +39,7 @@ data OptionFields a = OptionFields
 
 data FlagFields a = FlagFields
   { flagNames :: [OptName]
+  , flagCompleter :: Completer
   , flagActive :: a }
 
 data CommandFields a = CommandFields
@@ -65,6 +66,9 @@ instance HasCompleter OptionFields where
 
 instance HasCompleter ArgumentFields where
   modCompleter f p = p { argCompleter = f (argCompleter p) }
+
+instance HasCompleter FlagFields where
+  modCompleter f p = p { flagCompleter = f (flagCompleter p) }
 
 class HasValue f where
   -- this is just so that it is not necessary to specify the kind of f

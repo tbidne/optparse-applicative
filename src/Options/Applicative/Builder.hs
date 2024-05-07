@@ -331,7 +331,7 @@ flag' :: a                         -- ^ active value
       -> Parser a
 flag' actv (Mod f d g) = mkParser d g rdr
   where
-    rdr = let fields = f (FlagFields [] actv)
+    rdr = let fields = f (FlagFields [] mempty actv)
           in FlagReader (flagNames fields)
                         (flagActive fields)
 
