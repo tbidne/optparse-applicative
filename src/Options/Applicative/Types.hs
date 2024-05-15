@@ -155,17 +155,20 @@ data OptProperties = OptProperties
   , propShowDefault :: Maybe String       -- ^ what to show in the help text as the default
   , propShowGlobal :: Bool                -- ^ whether the option is presented in global options text
   , propDescMod :: Maybe ( Doc -> Doc )   -- ^ a function to run over the brief description
+  , propGroup :: Maybe String             -- ^ optional group name
   }
 
 instance Show OptProperties where
-  showsPrec p (OptProperties pV pH pMV pSD pSG _)
+  showsPrec p (OptProperties pV pH pMV pSD pSG _ pGrp)
     = showParen (p >= 11)
     $ showString "OptProperties { propVisibility = " . shows pV
     . showString ", propHelp = " . shows pH
     . showString ", propMetaVar = " . shows pMV
     . showString ", propShowDefault = " . shows pSD
     . showString ", propShowGlobal = " . shows pSG
-    . showString ", propDescMod = _ }"
+    . showString ", propDescMod = _"
+    . showString ", propGroup = " . shows pGrp
+    . showString "}"
 
 -- | A single option of a parser.
 data Option a = Option

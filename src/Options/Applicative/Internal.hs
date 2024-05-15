@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Options.Applicative.Internal
   ( P
   , MonadP(..)
@@ -24,6 +26,9 @@ module Options.Applicative.Internal
   , cut
   , (<!>)
   , disamb
+
+  , mapParserOptions
+  , sortGroupFst
   ) where
 
 import Control.Applicative
@@ -35,6 +40,9 @@ import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
   (mapReaderT, runReader, runReaderT, Reader, ReaderT, ask)
 import Control.Monad.Trans.State (StateT, get, put, modify, evalStateT, runStateT)
+import Data.Function (on)
+import Data.List (groupBy, sortBy)
+import Data.Maybe (catMaybes)
 
 import Options.Applicative.Types
 
@@ -266,3 +274,26 @@ hoistList :: Alternative m => [a] -> m a
 hoistList = foldr cons empty
   where
     cons x xs = pure x <|> xs
+
+-- | Strips 'Nothing', sorts then groups on the first element of the tuple.
+sortGroupFst :: (Ord a) => [Maybe (a, b)] -> [[(a, b)]]
+sortGroupFst =
+  groupFst
+    -- By sorting prior to grouping, we ensure all Eq a's are consecutive,
+    -- meaning we are guaranteed to have exactly one representative for
+    -- each group.
+    . sortBy (compare `on` fst)
+    . catMaybes
+  where
+    groupFst = groupBy ((==) `on` fst)
+
+-- | Maps an Option modifying function over the Parser.
+mapParserOptions :: (forall x. Option x -> Option x) -> Parser a -> Parser a
+mapParserOptions f = go
+  where
+    go :: forall y. Parser y -> Parser y
+    go (NilP x) = NilP x
+    go (OptP o) = OptP (f o)
+    go (MultP p1 p2) = MultP (go p1) (go p2)
+    go (AltP p1 p2) = AltP (go p1) (go p2)
+    go (BindP p1 p2) = BindP (go p1) (\x -> go (p2 x))
