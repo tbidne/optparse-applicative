@@ -131,6 +131,11 @@ test-suite tests
                      , Examples.Formatting
                      , Examples.Hello
                      , Examples.LongSub
+                     , Examples.ParserGroup.AllGrouped
+                     , Examples.ParserGroup.Basic
+                     , Examples.ParserGroup.CommandGroups
+                     , Examples.ParserGroup.Duplicates
+                     , Examples.ParserGroup.Nested
 
   build-depends:       base
                      , optparse-applicative

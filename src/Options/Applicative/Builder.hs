@@ -49,6 +49,7 @@ module Options.Applicative.Builder (
   completer,
   idm,
   mappend,
+  parserOptionGroup,
 
   -- * Readers
   --
@@ -118,6 +119,7 @@ import Options.Applicative.Common
 import Options.Applicative.Types
 import Options.Applicative.Help.Pretty
 import Options.Applicative.Help.Chunk
+import Options.Applicative.Internal (mapParserOptions)
 
 -- Readers --
 
@@ -378,6 +380,78 @@ option r m = mkParser d g rdr
     fields = f (OptionFields [] mempty ExpectsArgError)
     crdr = CReader (optCompleter fields) r
     rdr = OptReader (optNames fields) crdr (optNoArgError fields)
+
+-- | Add group to 'OptProperties'. Always overwrites the group, if it exists.
+-- This means, in particular, that we do not allow "nested groups" i.e. a
+-- parser group within a parser group.
+optPropertiesGroup :: String -> OptProperties -> OptProperties
+-- If we changed this to only overwrite Nothing, it would allow users to
+-- defined "nested groups" e.g.
+--
+--     parserOptionGroup "General group" $
+--       (,)
+--         <$> parserA
+--         <*> parserOptionGroup "B group" parserB
+--
+-- Despite the nested definition, these would still be flattened on the help
+-- page.
+--
+-- Since we __always__ overwrite the group, the above instead puts
+-- parserA and parserB into the same "General group". We judge this to be
+-- simpler.
+optPropertiesGroup grp o = o { propGroup = Just grp }
+
+-- | Add a group to 'Option'.
+optionGroup :: String -> Option a -> Option a
+optionGroup grp o = o { optProps = props' }
+  where
+    props' = optPropertiesGroup grp (optProps o)
+
+-- | This function can be used to group options together under a common
+-- heading. For example, if we have:
+--
+-- > Args
+-- >   <$> parseMain
+-- >   <*> parserOptionGroup "Group A" parseA
+-- >   <*> parserOptionGroup "Group B" parseB
+-- >   <*> parseOther
+--
+-- Then the help page will look like:
+--
+-- > Available options:
+-- >   <main options>
+-- >   <other options>
+-- >
+-- > Group A:
+-- >   <A options>
+-- >
+-- > Group B:
+-- >   <B options>
+--
+-- Caveats:
+--
+--   - Groups are listed in alphabetical order.
+--
+--   - Duplicate groups are merged i.e.
+--
+--       @
+--         -- parseA and parseC will be grouped together
+--         parserOptionGroup "Group A" parseA
+--         parserOptionGroup "Group B" parseB
+--         parserOptionGroup "Group A" parseC
+--       @
+--
+--   - Nested groups are overwritten by the outermost group:
+--
+--       @
+--         parserOptionGroup "Group A" (parserOptionGroup "Group Z" parseA)
+--       @
+--
+--       Will group @parseA@ under @Group A@.
+--
+-- @since 0.19.0.0
+parserOptionGroup :: String -> Parser a -> Parser a
+parserOptionGroup g = mapParserOptions (optionGroup g)
 
 -- | Modifier for 'ParserInfo'.
 newtype InfoMod a = InfoMod

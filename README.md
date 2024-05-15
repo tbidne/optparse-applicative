@@ -748,6 +748,53 @@ main = customExecParser p opts
     p = prefs showHelpOnEmpty
 ```
 
+#### Option groups
+
+The `parserOptionGroup` function can be used to group options together under
+a common heading. For example, if we have:
+
+```haskell
+Args
+  <$> parseMain
+  <*> parserOptionGroup "Group A" parseA
+  <*> parserOptionGroup "Group B" parseB
+  <*> parseOther
+```
+
+Then the `--help` page `Available options` will look like:
+
+```
+Available options:
+  <main options>
+  <other options>
+
+Group A:
+  <A options>
+
+Group B:
+  <B options>
+```
+
+Caveats:
+
+- Groups are listed in alphabetical order.
+- Duplicate groups are merged i.e.
+
+  ```haskell
+  -- parseA and parseC will be grouped together
+  parserOptionGroup "Group A" parseA
+  parserOptionGroup "Group B" parseA
+  parserOptionGroup "Group A" parseC
+  ```
+
+- Nested groups are overwritten by the outermost group:
+
+    ```haskell
+    parserOptionGroup "Group A" (parserOptionGroup "Group Z" parseA)
+    ```
+
+    Will group `parseA` under `Group A`.
+
 ### Command groups
 
 One experimental feature which may be useful for programs with many
