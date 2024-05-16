@@ -34,7 +34,7 @@ import Data.Semigroup (Semigroup (..))
 import Prelude hiding (any)
 
 import Options.Applicative.Common
-import Options.Applicative.Internal (sortGroupFst)
+import Options.Applicative.Internal (groupFst)
 import Options.Applicative.Types
 import Options.Applicative.Help.Pretty
 import Options.Applicative.Help.Chunk
@@ -202,16 +202,24 @@ optionsDesc global pprefs p = vsepChunks
   $ mapParser doc p
   where
     groupByTitle :: [Maybe (Maybe String, (Doc, Doc))] -> [[(Maybe String, (Doc, Doc))]]
-    groupByTitle = sortGroupFst
+    groupByTitle = groupFst
 
     tabulateGroup :: [(Maybe String, (Doc, Doc))] -> (Maybe String, Chunk Doc)
     tabulateGroup l@((title,_):_) = (title, tabulate (prefTabulateFill pprefs) (snd <$> l))
     tabulateGroup [] = mempty
 
+    -- Note that we treat Global/Available options identically, when it comes
+    -- to titles.
     formatTitle :: (Maybe String, Chunk Doc) -> Chunk Doc
-    formatTitle (mTitle, opts) = case mTitle of
-      Nothing -> opts
-      Just title -> (pretty (title ++ ":") .$.) <$> opts
+    formatTitle (mTitle, opts) =
+      case mTitle of
+        Nothing -> (pretty defTitle .$.) <$> opts
+        Just title -> (pretty (title ++ ":") .$.) <$> opts
+      where
+        defTitle =
+          if global
+            then "Global options:"
+            else "Available options:"
 
     doc :: ArgumentReachability -> Option a -> Maybe (Maybe String, (Doc, Doc))
     doc info opt = do
@@ -257,7 +265,7 @@ footerHelp chunk = mempty { helpFooter = chunk }
 parserHelp :: ParserPrefs -> Parser a -> ParserHelp
 parserHelp pprefs p =
   bodyHelp . vsepChunks $
-    with_title "Available options:" (fullDesc pprefs p)
+    (fullDesc pprefs p)
       : (group_title <$> cs)
   where
     def = "Available commands:"
@@ -274,9 +282,7 @@ parserHelp pprefs p =
 
 parserGlobals :: ParserPrefs -> Parser a -> ParserHelp
 parserGlobals pprefs p =
-  globalsHelp $
-    (.$.) <$> stringChunk "Global options:"
-          <*> globalDesc pprefs p
+  globalsHelp $ globalDesc pprefs p
 
 
 
