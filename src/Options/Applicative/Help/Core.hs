@@ -208,10 +208,32 @@ optionsDesc global pprefs p = vsepChunks
     tabulateGroup l@((title,_):_) = (title, tabulate (prefTabulateFill pprefs) (snd <$> l))
     tabulateGroup [] = mempty
 
+    -- REVIEW:
+    --
+    -- Conundrum: If we want to behave like command groups, then:
+    --
+    --   1. Groups should not be alphabetically sorted; first come, first serve
+    --   2. Duplicate groups __are__ allowed. In particular, ungrouped commands
+    --      are titled 'Available commands:', thus there can be multiples of
+    --      this section.
+    --
+    -- 1 just means we do not do any sorting when grouping (sortGroupFst).
+    -- 2 means that we should adorn __each__ ungrouped option with the
+    -- 'Available options:' title, so we need to do it here.
+    --
+    -- The question is, how do we interact with 'Global options:'? Right now
+    -- we treat it identically, simply swapping out the default title. But
+    -- we could do something different.
     formatTitle :: (Maybe String, Chunk Doc) -> Chunk Doc
-    formatTitle (mTitle, opts) = case mTitle of
-      Nothing -> opts
-      Just title -> (pretty (title ++ ":") .$.) <$> opts
+    formatTitle (mTitle, opts) =
+      case mTitle of
+        Nothing -> (pretty defTitle .$.) <$> opts
+        Just title -> (pretty (title ++ ":") .$.) <$> opts
+      where
+        defTitle =
+          if global
+            then "Global options:"
+            else "Available options:"
 
     doc :: ArgumentReachability -> Option a -> Maybe (Maybe String, (Doc, Doc))
     doc info opt = do
@@ -257,7 +279,7 @@ footerHelp chunk = mempty { helpFooter = chunk }
 parserHelp :: ParserPrefs -> Parser a -> ParserHelp
 parserHelp pprefs p =
   bodyHelp . vsepChunks $
-    with_title "Available options:" (fullDesc pprefs p)
+    (fullDesc pprefs p)
       : (group_title <$> cs)
   where
     def = "Available commands:"
@@ -274,9 +296,7 @@ parserHelp pprefs p =
 
 parserGlobals :: ParserPrefs -> Parser a -> ParserHelp
 parserGlobals pprefs p =
-  globalsHelp $
-    (.$.) <$> stringChunk "Global options:"
-          <*> globalDesc pprefs p
+  globalsHelp $ globalDesc pprefs p
 
 
 
