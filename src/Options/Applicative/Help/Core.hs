@@ -51,7 +51,7 @@ safelast :: [a] -> Maybe a
 safelast = foldl' (const Just) Nothing
 
 -- | Generate description for a single option.
-optDesc :: ParserPrefs -> OptDescStyle -> ArgumentReachability -> Option a -> (Maybe String, Chunk Doc, Parenthetic)
+optDesc :: ParserPrefs -> OptDescStyle -> ArgumentReachability -> Option a -> (Maybe OptGroup, Chunk Doc, Parenthetic)
 optDesc pprefs style _reachability opt =
   let names =
         sort . optionNames . optMain $ opt
@@ -201,27 +201,29 @@ optionsDesc global pprefs p = vsepChunks
   . groupByTitle
   $ mapParser doc p
   where
-    groupByTitle :: [Maybe (Maybe String, (Doc, Doc))] -> [[(Maybe String, (Doc, Doc))]]
+    groupByTitle :: [Maybe (Maybe OptGroup, (Doc, Doc))] -> [[(Maybe OptGroup, (Doc, Doc))]]
     groupByTitle = groupFst
 
-    tabulateGroup :: [(Maybe String, (Doc, Doc))] -> (Maybe String, Chunk Doc)
+    tabulateGroup :: [(Maybe OptGroup, (Doc, Doc))] -> (Maybe OptGroup, Chunk Doc)
     tabulateGroup l@((title,_):_) = (title, tabulate (prefTabulateFill pprefs) (snd <$> l))
-    tabulateGroup [] = mempty
+    tabulateGroup [] = (Nothing, mempty)
 
     -- Note that we treat Global/Available options identically, when it comes
     -- to titles.
-    formatTitle :: (Maybe String, Chunk Doc) -> Chunk Doc
-    formatTitle (mTitle, opts) =
-      case mTitle of
+    formatTitle :: (Maybe OptGroup, Chunk Doc) -> Chunk Doc
+    formatTitle (mGroup, opts) =
+      case mGroup of
         Nothing -> (pretty defTitle .$.) <$> opts
-        Just title -> (pretty (title ++ ":") .$.) <$> opts
+        Just (OptGroup idx title) ->
+          let titledOpts = (pretty (title ++ ":") .$.) <$> opts
+          in (\d -> indent (fromIntegral $ idx * 2) d) <$> titledOpts
       where
         defTitle =
           if global
             then "Global options:"
             else "Available options:"
 
-    doc :: ArgumentReachability -> Option a -> Maybe (Maybe String, (Doc, Doc))
+    doc :: ArgumentReachability -> Option a -> Maybe (Maybe OptGroup, (Doc, Doc))
     doc info opt = do
       guard . not . isEmpty $ n
       guard . not . isEmpty $ h

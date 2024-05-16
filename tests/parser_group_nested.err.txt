@@ -12,9 +12,9 @@ Available options:
 Logging:
   --file-log-path PATH     Log file path
 
-System Options:
-  --poll                   Whether to poll
-  --timeout INT            Whether to time out
+  System Options:
+    --poll                   Whether to poll
+    --timeout INT            Whether to time out
 
 Logging:
   --file-log-verbosity INT File log verbosity

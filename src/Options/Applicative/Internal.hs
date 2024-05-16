@@ -276,7 +276,7 @@ hoistList = foldr cons empty
     cons x xs = pure x <|> xs
 
 -- | Strips 'Nothing', then groups on the first element of the tuple.
-groupFst :: (Ord a) => [Maybe (a, b)] -> [[(a, b)]]
+groupFst :: (Eq a) => [Maybe (a, b)] -> [[(a, b)]]
 groupFst = groupBy ((==) `on` fst) . catMaybes
 
 -- | Maps an Option modifying function over the Parser.

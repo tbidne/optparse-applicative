@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 module Options.Applicative.Builder (
   -- * Parser builders
@@ -391,9 +392,10 @@ option r m = mkParser d g rdr
 --
 -- will have the inner most group ("Group Inner", in this example).
 optPropertiesGroup :: String -> OptProperties -> OptProperties
-optPropertiesGroup grp o = case propGroup o of
-  Nothing -> o { propGroup = Just grp }
-  Just _ -> o
+optPropertiesGroup newGroupName o = case propGroup o of
+  Nothing -> o { propGroup = Just (OptGroup 0 newGroupName) }
+  Just (OptGroup idx currGroupName) ->
+    o { propGroup = Just (OptGroup (idx + 1) currGroupName) }
 
 -- | Add a group to 'Option', if it is currently unset.
 optionGroup :: String -> Option a -> Option a

@@ -11,6 +11,7 @@ module Options.Applicative.Types (
 
   OptReader(..),
   OptProperties(..),
+  OptGroup (..),
   OptVisibility(..),
   Backtracking(..),
   ReadM(..),
@@ -56,6 +57,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, ask)
 import qualified Control.Monad.Fail as Fail
 import Data.Semigroup hiding (Option)
+import Data.Word (Word8)
 import Prelude
 
 import System.Exit (ExitCode(..))
@@ -147,6 +149,12 @@ data OptVisibility
   | Visible           -- ^ visible both in the full and brief descriptions
   deriving (Eq, Ord, Show)
 
+data OptGroup = OptGroup
+  { optGroupIndex :: !Word8,
+    optGroupName :: String
+  }
+  deriving (Eq, Show)
+
 -- | Specification for an individual parser option.
 data OptProperties = OptProperties
   { propVisibility :: OptVisibility       -- ^ whether this flag is shown in the brief description
@@ -155,7 +163,7 @@ data OptProperties = OptProperties
   , propShowDefault :: Maybe String       -- ^ what to show in the help text as the default
   , propShowGlobal :: Bool                -- ^ whether the option is presented in global options text
   , propDescMod :: Maybe ( Doc -> Doc )   -- ^ a function to run over the brief description
-  , propGroup :: Maybe String             -- ^ optional group name
+  , propGroup :: Maybe OptGroup           -- ^ optional group
   }
 
 instance Show OptProperties where
