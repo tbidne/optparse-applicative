@@ -56,6 +56,10 @@ module Options.Applicative.Builder (
   -- | A collection of basic 'Option' readers.
   auto,
   str,
+#if MIN_VERSION_filepath(1,4,100)
+  ospath,
+  ospathValid,
+#endif
   maybeReader,
   eitherReader,
   disabled,
@@ -121,6 +125,13 @@ import Options.Applicative.Help.Pretty
 import Options.Applicative.Help.Chunk
 import Options.Applicative.Internal (mapParserOptions)
 
+#if MIN_VERSION_filepath(1,4,100)
+import Data.Bifunctor (Bifunctor(first))
+import Control.Exception (displayException)
+import System.OsPath (OsPath)
+import qualified System.OsPath as OsPath
+#endif
+
 -- Readers --
 
 -- | 'Option' reader based on the 'Read' type class.
@@ -134,6 +145,26 @@ auto = eitherReader $ \arg -> case reads arg of
 --   Polymorphic over the `IsString` type class since 0.14.
 str :: IsString s => ReadM s
 str = fromString <$> readerAsk
+
+#if MIN_VERSION_filepath(1,4,100)
+
+ospath :: ReadM OsPath
+ospath = eitherReader (\arg -> first (mkErr arg) . OsPath.encodeUtf $ arg)
+  where
+    mkErr arg ex =
+      "cannot parse value `" ++ arg ++ "': " ++ displayException ex
+
+ospathValid :: ReadM OsPath
+ospathValid = do
+  arg <- readerAsk
+  p <- ospath
+  if OsPath.isValid p
+    then pure p
+    else
+      readerError
+        $ "cannot parse value `" ++ arg ++ "': ospath `" ++ show p ++ "' is invalid"
+
+#endif
 
 -- | Convert a function producing an 'Either' into a reader.
 --
