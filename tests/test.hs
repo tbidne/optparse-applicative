@@ -6,6 +6,9 @@ module Main where
 
 import qualified Examples.Hello as Hello
 import qualified Examples.Commands as Commands
+import qualified Examples.CommandDupes as CommandDupes
+import qualified Examples.CommandAliases as CommandAliases
+import qualified Examples.CommandAliasDupes as CommandAliasDupes
 import qualified Examples.Cabal as Cabal
 import qualified Examples.Alternatives as Alternatives
 import qualified Examples.Formatting as Formatting
@@ -60,6 +63,14 @@ assertResult x f = case x of
     counterexample ("unexpected parse error\n" ++ msg) failed
   CompletionInvoked _ -> counterexample "expected result, got completion" failed
 
+assertCompletions :: (Show a) => ParserResult a -> ([String] -> Property) -> IO Property
+assertCompletions result onCompletions = case result of
+  CompletionInvoked (CompletionResult err) -> do
+    completions <- lines <$> err "test"
+    pure $ onCompletions completions
+  Failure _ -> pure $ counterexample "unexpected failure" failed
+  Success val -> pure $ counterexample ("unexpected result " ++ show val) failed
+
 assertHasLine :: String -> String -> Property
 assertHasLine l s = counterexample ("expected line:\n\t" ++ l ++ "\nnot found")
                   $ l `elem` lines s
@@ -111,6 +122,170 @@ prop_args_ddash :: Property
 prop_args_ddash = once $
   let result = run Commands.opts ["hello", "foo", "--", "--bar", "--", "baz"]
   in  assertResult result ((===) (Commands.Hello ["foo", "--bar", "--", "baz"]))
+
+prop_cmd_dupes :: Property
+prop_cmd_dupes = once $
+  checkHelpText "prop_cmd_dupes" CommandDupes.opts ["--help"]
+
+prop_cmd_dupes_arg :: Property
+prop_cmd_dupes_arg = once $
+  assertResult (run CommandDupes.opts ["hello"]) (=== CommandDupes.Goodbye)
+
+prop_cmd_dupes_completion :: Property
+prop_cmd_dupes_completion = once . ioProperty $
+  let p = CommandDupes.sample
+      i = info p idm
+      result = run i ["--bash-completion-index", "0"]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "hello",
+        "hello"
+      ]
+
+prop_cmd_dupes_completion_cmd :: Property
+prop_cmd_dupes_completion_cmd = once . ioProperty $
+  let p = CommandDupes.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     , "--bash-completion-word", "h"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "hello",
+        "hello"
+      ]
+
+prop_cmd_aliases :: Property
+prop_cmd_aliases = once $
+  checkHelpText "prop_cmd_aliases" CommandAliases.opts ["--help"]
+
+prop_cmd_aliases_arg :: Property
+prop_cmd_aliases_arg = once $
+  conjoin [ assertResult (run CommandAliases.opts ["hello", "b", "c"]) (=== CommandAliases.Hello ["b", "c"])
+          , assertResult (run CommandAliases.opts ["hi", "b", "c"]) (=== CommandAliases.Hello ["b", "c"])
+          , assertResult (run CommandAliases.opts ["goodbye"]) (=== CommandAliases.Goodbye)
+          , assertResult (run CommandAliases.opts ["bonjour", "a", "b"]) (=== CommandAliases.Hello ["a","b"])
+          , assertResult (run CommandAliases.opts ["au-revoir"]) (=== CommandAliases.Goodbye)
+          , assertResult (run CommandAliases.opts ["ciao"]) (=== CommandAliases.Goodbye)
+          , assertResult (run CommandAliases.opts ["adieu"]) (=== CommandAliases.Goodbye)
+          , assertResult (run CommandAliases.opts ["health"]) (=== CommandAliases.Health)
+          , assertResult (run CommandAliases.opts ["aux"]) (=== CommandAliases.Aux)
+          ]
+
+prop_cmd_aliases_completion :: Property
+prop_cmd_aliases_completion = once . ioProperty $
+  let p = CommandAliases.sample
+      i = info p idm
+      result = run i ["--bash-completion-index", "0"]
+  in case result of
+    CompletionInvoked (CompletionResult err) -> do
+      completions <- lines <$> err "test"
+      return $ expected === completions
+    Failure _   -> return $ counterexample "unexpected failure" failed
+    Success val -> return $ counterexample ("unexpected result " ++ show val) failed
+  where
+    expected =
+      [ "goodbye"
+      , "hello"
+      , "hi"
+      , "au-revoir"
+      , "adieu"
+      , "ciao"
+      , "bonjour"
+      , "aux"
+      , "health"
+      ]
+
+prop_cmd_aliases_completion_alias1 :: Property
+prop_cmd_aliases_completion_alias1 = once . ioProperty $
+  let p = CommandAliases.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     , "--bash-completion-word", "he"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "hello"
+      , "health"
+      ]
+
+prop_cmd_aliases_completion_alias2 :: Property
+prop_cmd_aliases_completion_alias2 = once . ioProperty $
+  let p = CommandAliases.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     , "--bash-completion-word", "a"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "au-revoir"
+      , "adieu"
+      , "aux"
+      ]
+
+prop_cmd_aliases_completion_alias3 :: Property
+prop_cmd_aliases_completion_alias3 = once . ioProperty $
+  let p = CommandAliases.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     , "--bash-completion-word", "au"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "au-revoir"
+      , "aux"
+      ]
+
+prop_cmd_alias_dupes :: Property
+prop_cmd_alias_dupes = once $
+  checkHelpText "prop_cmd_alias_dupes" CommandAliasDupes.opts ["--help"]
+
+prop_cmd_alias_dupes_arg :: Property
+prop_cmd_alias_dupes_arg = once $
+  conjoin [ assertResult (run CommandAliasDupes.opts ["hello"]) (=== CommandAliasDupes.Hello)
+          , assertResult (run CommandAliasDupes.opts ["hi"]) (=== CommandAliasDupes.Hello)
+          , assertResult (run CommandAliasDupes.opts ["h"]) (=== CommandAliasDupes.Goodbye)
+          , assertResult (run CommandAliasDupes.opts ["goodbye"]) (=== CommandAliasDupes.Goodbye)
+          , assertResult (run CommandAliasDupes.opts ["g"]) (=== CommandAliasDupes.Goodbye)
+          ]
+
+prop_cmd_aliases_dupes_completion :: Property
+prop_cmd_aliases_dupes_completion = once . ioProperty $
+  let p = CommandAliasDupes.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "goodbye"
+      , "g"
+      , "h"
+      , "hello"
+      , "hi"
+      , "h"
+      ]
+
+prop_cmd_aliases_dupes_completion_alias1 :: Property
+prop_cmd_aliases_dupes_completion_alias1 = once . ioProperty $
+  let p = CommandAliasDupes.sample
+      i = info p idm
+      result = run i [ "--bash-completion-index", "0"
+                     , "--bash-completion-word", "h"
+                     ]
+  in assertCompletions result (=== expected)
+  where
+    expected =
+      [ "h"
+      , "hello"
+      , "hi"
+      , "h"
+      ]
 
 prop_alts :: Property
 prop_alts = once $

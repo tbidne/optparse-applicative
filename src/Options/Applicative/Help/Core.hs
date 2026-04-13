@@ -96,10 +96,15 @@ cmdDesc pprefs = mapParser desc
         CmdReader gn cmds ->
           (,) gn $
             tabulate (prefTabulateFill pprefs)
-              [ (pretty nm, align (extractChunk (infoProgDesc cmd)))
+              [ (pCmds nm, align (extractChunk (infoProgDesc cmd)))
               | (nm, cmd) <- reverse cmds
               ]
         _ -> mempty
+
+    pCmds =
+      pretty
+        . List.intercalate ","
+        . NE.toList
 
 -- | Generate a brief help text for a parser.
 briefDesc :: ParserPrefs -> Parser a -> Chunk Doc

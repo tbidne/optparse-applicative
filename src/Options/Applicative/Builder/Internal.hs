@@ -26,6 +26,7 @@ module Options.Applicative.Builder.Internal (
 
 import Control.Applicative
 import Control.Monad (mplus)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Semigroup hiding (Option)
 import Prelude
 
@@ -42,7 +43,7 @@ data FlagFields a = FlagFields
   , flagActive :: a }
 
 data CommandFields a = CommandFields
-  { cmdCommands :: [(String, ParserInfo a)]
+  { cmdCommands :: [(NonEmpty String, ParserInfo a)]
   , cmdGroup :: Maybe String }
 
 data ArgumentFields a = ArgumentFields
@@ -154,7 +155,7 @@ baseProps = OptProperties
   , propGroup = OptGroup []
   }
 
-mkCommand :: Mod CommandFields a -> (Maybe String, [(String, ParserInfo a)])
+mkCommand :: Mod CommandFields a -> (Maybe String, [(NonEmpty String, ParserInfo a)])
 mkCommand m = (group, cmds)
   where
     Mod f _ _ = m
