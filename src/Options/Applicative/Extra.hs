@@ -22,9 +22,10 @@ module Options.Applicative.Extra (
   ) where
 
 import Control.Applicative
-import Control.Monad (void)
+import Control.Monad (join, void)
 import Data.Monoid
 import Data.Foldable (traverse_)
+import qualified Data.List.NonEmpty as NE
 import Prelude
 import System.Environment (getArgs, getProgName)
 import System.Exit (exitSuccess, exitWith, ExitCode(..))
@@ -320,7 +321,7 @@ parserFailure pprefs pinfo msg ctx0 = ParserFailure $ \progn ->
               CmdReader _ ns    | argumentIsUnreachable reachability
                                -> []
                                 | otherwise
-                               -> fst <$> ns
+                               -> join $ NE.toList . fst <$> ns
       _
         -> mempty
 

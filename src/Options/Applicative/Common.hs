@@ -56,6 +56,7 @@ import Control.Monad (guard, mzero, msum, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State (StateT(..), get, put, runStateT)
 import Data.List (isPrefixOf)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (maybeToList, isJust, isNothing)
 import Prelude
 
@@ -195,8 +196,16 @@ searchArg prefs arg =
 
   where
     cmdMatches cs
-      | prefDisambiguate prefs = snd <$> filter (isPrefixOf arg . fst) cs
-      | otherwise = maybeToList (lookup arg cs)
+      | prefDisambiguate prefs = snd <$> filter (any (isPrefixOf arg) . fst) cs
+      | otherwise = maybeToList (lookupCmd arg cs)
+
+lookupCmd :: String -> [(NonEmpty String, a)] -> Maybe a
+lookupCmd k = foldr go Nothing
+  where
+    go (aliases, y) acc =
+      if any (== k) aliases
+        then Just y
+        else acc
 
 stepParser :: MonadP m => ParserPrefs -> ArgPolicy -> String
            -> Parser a -> NondetT (StateT Args m) (Parser a)

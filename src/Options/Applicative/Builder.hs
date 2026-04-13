@@ -43,6 +43,7 @@ module Options.Applicative.Builder (
   internal,
   style,
   command,
+  commandAliases,
   commandGroup,
   completeWith,
   action,
@@ -107,6 +108,7 @@ module Options.Applicative.Builder (
   ) where
 
 import Control.Applicative
+import Data.List.NonEmpty (NonEmpty ((:|)))
 #if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup hiding (Option, option)
 #endif
@@ -240,7 +242,28 @@ style x = optionMod $ \p ->
 -- @
 command :: String -> ParserInfo a -> Mod CommandFields a
 command cmd pinfo = fieldMod $ \p ->
-  p { cmdCommands = (cmd, pinfo) : cmdCommands p }
+  p { cmdCommands = (cmd :| [], pinfo) : cmdCommands p }
+
+-- | Add a command and possible aliases to a subparser option.
+--
+-- @
+-- sample :: Parser Sample
+-- sample = subparser
+--        ( commandAliases ("hello" :| ["hi"])
+--          (info hello (progDesc "Print greeting"))
+--       <> command "goodbye"
+--          (info goodbye (progDesc "Say goodbye"))
+--        )
+-- @
+--
+-- > Available commands:
+-- >   hello, hi                Print greeting
+-- >   goodbye                  Say goodbye
+--
+-- @since 0.20.0.0
+commandAliases :: NonEmpty String -> ParserInfo a -> Mod CommandFields a
+commandAliases aliases pinfo = fieldMod $ \p ->
+  p { cmdCommands = (aliases, pinfo) : cmdCommands p }
 
 -- | Add a description to a group of commands.
 --

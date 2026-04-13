@@ -18,6 +18,8 @@ import Prelude
 import Data.Foldable ( asum )
 #endif
 import Data.List ( isPrefixOf )
+import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Data.Maybe ( fromMaybe, listToMaybe )
 
 import Options.Applicative.Builder
@@ -120,7 +122,7 @@ bashCompletionQuery pinfo pprefs richness ws i _ = case runCompletion compl ppre
          | argumentIsUnreachable reachability
         -> return []
          | otherwise
-        -> return . with_cmd_help $ filter (is_completion . fst) ns
+        -> return . with_cmd_help $ filter_completions ns
 
     -- When doing enriched completions, add any help specified
     -- to the completion variables (tab separated).
@@ -147,6 +149,22 @@ bashCompletionQuery pinfo pprefs richness ws i _ = case runCompletion compl ppre
 
     show_names :: [OptName] -> [String]
     show_names = filter is_completion . map showOption
+
+    -- Filter commands and aliases matching the completion e.g. if we have
+    -- commands:
+    --
+    --   - ([retry], p1)
+    --   - ([run, r, go], p2)
+    --   - ([search], p3)
+    --
+    -- and the user types 'r', we should return
+    --
+    --   [(retry, p1), (run, p2), (r, p2)]
+    filter_completions :: [(NonEmpty String, ParserInfo a)] -> [(String, ParserInfo a)]
+    filter_completions =
+      let matchZip :: (NonEmpty String, b) -> [(String, b)]
+          matchZip (aliases, painfo) = (\x -> (x, painfo)) <$> NE.filter is_completion aliases
+      in (>>= matchZip)
 
     -- We only want to show a single line in the completion results description.
     -- If there was a line break, it would come across as a different completion
