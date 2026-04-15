@@ -2,7 +2,7 @@ name: mhs-ci
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "commands-ci" ]
   pull_request:
     branches: [ "master" ]
 
