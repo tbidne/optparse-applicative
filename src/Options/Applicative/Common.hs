@@ -1,4 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
+
 module Options.Applicative.Common (
   -- * Option parsers
   --
@@ -55,6 +56,7 @@ import Control.Applicative
 import Control.Monad (guard, mzero, msum, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State (StateT(..), get, put, runStateT)
+import qualified Data.Foldable as F
 import Data.List (isPrefixOf)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (maybeToList, isJust, isNothing)
@@ -196,14 +198,14 @@ searchArg prefs arg =
 
   where
     cmdMatches cs
-      | prefDisambiguate prefs = snd <$> filter (any (isPrefixOf arg) . fst) cs
+      | prefDisambiguate prefs = snd <$> filter (F.any (isPrefixOf arg) . fst) cs
       | otherwise = maybeToList (lookupCmd arg cs)
 
 lookupCmd :: String -> [(NonEmpty String, a)] -> Maybe a
 lookupCmd k = foldr go Nothing
   where
     go (aliases, y) acc =
-      if any (== k) aliases
+      if F.any (== k) aliases
         then Just y
         else acc
 
