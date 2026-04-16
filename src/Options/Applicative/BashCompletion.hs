@@ -17,10 +17,11 @@ import Prelude
 #if !defined(__MHS__)
 import Data.Foldable ( asum )
 #endif
+
+import qualified Data.Foldable as Foldable
 import Data.List ( isPrefixOf )
 import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
-import Data.Maybe ( fromMaybe, listToMaybe )
+import Data.Maybe ( fromMaybe, listToMaybe, mapMaybe )
 
 import Options.Applicative.Builder
 import Options.Applicative.Common
@@ -159,12 +160,20 @@ bashCompletionQuery pinfo pprefs richness ws i _ = case runCompletion compl ppre
     --
     -- and the user types 'r', we should return
     --
-    --   [(retry, p1), (run, p2), (r, p2)]
+    --   [(retry, p1), (run, p2)]
+    --
+    -- If the first entry (command name) is the canonical one, we should
+    -- favour it in completions, as if we were to provide all options there
+    -- would be a good chance we'd be forcing the user to tab through and
+    -- disambiguate between functionally identical options.
+    --
+    -- In zsh and fish we also provide the help doc in the completions, which
+    -- we don't want to repeat a whole bunch of times.
     filter_completions :: [(NonEmpty String, ParserInfo a)] -> [(String, ParserInfo a)]
     filter_completions =
-      let matchZip :: (NonEmpty String, b) -> [(String, b)]
-          matchZip (aliases, painfo) = (\x -> (x, painfo)) <$> NE.filter is_completion aliases
-      in (>>= matchZip)
+      let findAlias :: (NonEmpty String, b) -> Maybe (String, b)
+          findAlias (aliases, painfo) = (\x -> (x, painfo)) <$> Foldable.find is_completion aliases
+      in mapMaybe findAlias
 
     -- We only want to show a single line in the completion results description.
     -- If there was a line break, it would come across as a different completion

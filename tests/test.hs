@@ -187,16 +187,7 @@ prop_cmd_aliases_completion = once . ioProperty $
     Success val -> return $ counterexample ("unexpected result " ++ show val) failed
   where
     expected =
-      [ "goodbye"
-      , "hello"
-      , "hi"
-      , "au-revoir"
-      , "adieu"
-      , "ciao"
-      , "bonjour"
-      , "aux"
-      , "health"
-      ]
+      ["goodbye","hello","au-revoir","bonjour","aux","health"]
 
 prop_cmd_aliases_completion_alias1 :: Property
 prop_cmd_aliases_completion_alias1 = once . ioProperty $
@@ -222,10 +213,7 @@ prop_cmd_aliases_completion_alias2 = once . ioProperty $
   in assertCompletions result (=== expected)
   where
     expected =
-      [ "au-revoir"
-      , "adieu"
-      , "aux"
-      ]
+      ["au-revoir","aux"]
 
 prop_cmd_aliases_completion_alias3 :: Property
 prop_cmd_aliases_completion_alias3 = once . ioProperty $
@@ -263,13 +251,7 @@ prop_cmd_aliases_dupes_completion = once . ioProperty $
   in assertCompletions result (=== expected)
   where
     expected =
-      [ "goodbye"
-      , "g"
-      , "h"
-      , "hello"
-      , "hi"
-      , "h"
-      ]
+      ["goodbye","hello"]
 
 prop_cmd_aliases_dupes_completion_alias1 :: Property
 prop_cmd_aliases_dupes_completion_alias1 = once . ioProperty $
@@ -281,11 +263,7 @@ prop_cmd_aliases_dupes_completion_alias1 = once . ioProperty $
   in assertCompletions result (=== expected)
   where
     expected =
-      [ "h"
-      , "hello"
-      , "hi"
-      , "h"
-      ]
+      ["h","hello"]
 
 prop_alts :: Property
 prop_alts = once $
