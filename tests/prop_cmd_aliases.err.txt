@@ -1,0 +1,16 @@
+Usage: prop_cmd_aliases (COMMAND | COMMAND)
+
+Available options:
+  -h,--help                Show this help text
+
+Available commands:
+  hello,hi                 Print greeting
+  goodbye                  Say goodbye
+
+French commands:
+  bonjour                  Print greeting
+  au-revoir,adieu,ciao     Say goodbye
+
+Other commands:
+  health                   Check health
+  aux                      Auxiliary

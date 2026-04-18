@@ -6,6 +6,8 @@
 - Remove `fullDesc` and `briefDesc` builder modifiers – they have not had an
   effect since version 0.8.
 
+- Add `commandWithAliases` for defining multiple aliases for the same command.
+
 ## Version 0.19.0.0 (03 June 2025)
 
 - Add `briefHangPoint` modifier. This allows one to specify the command length

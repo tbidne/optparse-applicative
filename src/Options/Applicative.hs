@@ -99,6 +99,7 @@ module Options.Applicative (
   internal,
   style,
   command,
+  commandWithAliases,
   commandGroup,
   completeWith,
   action,
