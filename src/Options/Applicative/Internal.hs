@@ -80,7 +80,7 @@ contextNames ns =
   in  reverse $ go <$> ns
 
 instance MonadP P where
-  enterContext name pinfo = P $ lift $ modify $ \(_, ctxs) -> (CmdStart, (Context name pinfo : ctxs))
+  enterContext name pinfo = P $ lift $ modify $ \(_, ctxs) -> (CmdStart, Context name pinfo : ctxs)
   exitContext = P $ lift $ modify $ fmap (drop 1)
   continueContext = P $ lift $ modify $ \(_, ctxs) -> (CmdCont, ctxs)
   getPrefs = P . lift . lift $ ask
