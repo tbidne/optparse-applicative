@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 module Options.Applicative.Help.Core (
   cmdDesc,
   briefDesc,
