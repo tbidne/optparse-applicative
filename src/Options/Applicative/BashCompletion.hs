@@ -14,7 +14,7 @@ module Options.Applicative.BashCompletion
 
 import Control.Applicative
 import Prelude
-#if !defined(__MHS__)
+#if !MIN_VERSION_base(4,16,0)
 import Data.Foldable ( asum )
 #endif
 
@@ -232,7 +232,7 @@ words.
 Tab characters separate items from descriptions.
 -}
 
--- | Generated fish shell completion script 
+-- | Generated fish shell completion script
 fishCompletionScript :: String -> String -> String
 fishCompletionScript prog progn = unlines
   [ " function _" ++ progn
