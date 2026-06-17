@@ -2,7 +2,6 @@
 
 [![Continuous Integration status][status-png]][status]
 [![Hackage page (downloads and API reference)][hackage-png]][hackage]
-[![Hackage-Deps][hackage-deps-png]][hackage-deps]
 
 
 optparse-applicative is a haskell library for parsing options on
@@ -1043,20 +1042,20 @@ and the `pure` value should instead be wrapped parenthetically).
   ```
 
 ## How it works
-An applicative `Parser` is essentially a heterogeneous list or tree
-of `Option`s, implemented with existential types.
 
-All options are therefore known statically (i.e. before parsing,
-not necessarily before runtime), and can, for example, be traversed
-to generate a help text. Indeed, when displaying the usage text for
-a parser, we use an intermediate tree structure.
+An applicative `Parser` is essentially a heterogeneous tree of
+`Option`s, made type safe using a technique called _existential types_.
 
-When we examine the user's input, each argument is examined to
-determine if it's an option or flag, or a positional argument. The
-parse tree is then searched for a matching term, and if it finds
-one, that leaf of the tree is replaced with the value itself. When
-all input has been processed, we see if we can generate the complete
-value, and if not issue an error.
+All options are therefore known before we parse any user input, and
+can be traversed to generate a help text and any command line completions
+required.
+
+When we examine the user's input, the terms are checked if they're an
+option or flag, as opposed to a positional argument. The `Parser` tree
+is then searched for a matching term, and if it finds one, that leaf
+of the tree is replaced with the value provided. When all input has been
+processed, we see if we can generate the complete value, and if not,
+issue an error.
 
 See [this blog post][blog] for a more detailed explanation based on a
 simplified implementation.
@@ -1077,8 +1076,6 @@ These are some tutorials found on the web:
  [blog]: http://paolocapriotti.com/blog/2012/04/27/applicative-option-parser/
  [hackage]: http://hackage.haskell.org/package/optparse-applicative
  [hackage-png]: http://img.shields.io/hackage/v/optparse-applicative.svg
- [hackage-deps]: http://packdeps.haskellers.com/reverse/optparse-applicative
- [hackage-deps-png]: https://img.shields.io/hackage-deps/v/optparse-applicative.svg
  [monoid]: http://hackage.haskell.org/package/base/docs/Data-Monoid.html
  [semigroup]: http://hackage.haskell.org/package/base/docs/Data-Semigroup.html
  [parsec]: http://hackage.haskell.org/package/parsec
