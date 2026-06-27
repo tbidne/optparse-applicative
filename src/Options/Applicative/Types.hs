@@ -57,7 +57,9 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Reader (ReaderT, ask)
 import qualified Control.Monad.Fail as Fail
 import Data.List.NonEmpty (NonEmpty)
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup hiding (Option)
+#endif
 import Prelude
 
 import System.Exit (ExitCode(..))

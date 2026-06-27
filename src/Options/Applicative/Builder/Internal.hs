@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Options.Applicative.Builder.Internal (
   -- * Internals
   Mod(..),
@@ -27,7 +28,9 @@ module Options.Applicative.Builder.Internal (
 import Control.Applicative
 import Control.Monad (mplus)
 import Data.List.NonEmpty (NonEmpty)
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup hiding (Option)
+#endif
 import Prelude
 
 import Options.Applicative.Common
